@@ -159,6 +159,34 @@ impl<const N: usize> Deref for StringRing<N> {
     }
 }
 
+#[cfg(test)]
+mod string_ring_tests {
+    use super::*;
+    use proptest::{collection, prelude::*, num};
+    use paste::paste;
+
+    const MAX_DATA_SIZE: usize = 1024 * 1024;
+
+    macro_rules! const_prop {
+        ($($n: literal),* $(,)?) => {
+            paste! {
+                proptest! {
+                    $(
+                        #[test]
+                        fn [<doesnt_crash_ $n>](data in collection::vec(num::u8::ANY, 0..MAX_DATA_SIZE)) {
+                            let mut sr: StringRing<{$n}> = StringRing::new();
+                            let mut data = &data[..];
+                            sr.extend(&mut data).expect("extending failed");
+                        }
+                    )*
+                }
+            }
+        };
+    }
+
+    const_prop!(0, 1, 2, 3, 4, 5, 6, 7, 8);
+}
+
 #[derive(Debug)]
 enum MatchStatus {
     Success(MatchTicket),
